@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>TGRE Proposal Generator</title>
+<style>
+/* === RESET & BASE === */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f9f2ed;
+  --bg-dark: #2c2522;
+  --accent: #d4714e;
+  --accent-hover: #c4613e;
+  --text: #2c2522;
+  --text-mid: #6b5e57;
+  --text-light: #9b8e87;
+  --border: #e5ddd7;
+  --white: #ffffff;
+  --green: #4ade80;
+  --red: #ef4444;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(44,37,34,.06), 0 4px 12px rgba(44,37,34,.04);
+  --shadow-lg: 0 4px 24px rgba(44,37,34,.08);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* === LAYOUT === */
+.app { display: grid; grid-template-columns: 420px 1fr; height: 100vh; }
+
+/* === SIDEBAR (FORM) === */
+.sidebar {
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 0;
+}
+.sidebar-header {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--bg-dark);
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.sidebar-header h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--bg);
+  letter-spacing: -.02em;
+}
+.sidebar-header p {
+  font-size: 12px;
+  color: rgba(249,242,237,.4);
+  margin-top: 4px;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 9;
+}
+.tab {
+  flex: 1;
+  padding: 12px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-light);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all .2s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-content { display: none; padding: 1.5rem; padding-bottom: 120px; }
+.tab-content.active { display: block; }
+
+/* Form elements */
+.field { margin-bottom: 1.25rem; }
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-mid);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 6px;
+}
+.field input, .field select, .field textarea {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  transition: border-color .2s, box-shadow .2s;
+  font-family: inherit;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(212,113,78,.12);
+}
+.field textarea { resize: vertical; min-height: 80px; }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Range slider */
+.range-field { position: relative; }
+.range-header { display: flex; justify-content: space-between; align-items: center; }
+.range-val {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  outline: none;
+  margin-top: 8px;
+  border: none;
+  padding: 0;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(212,113,78,.3);
+  transition: transform .15s;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* Section divider */
+.section-divider {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--accent);
+  padding: 1rem 0 .5rem;
+  border-top: 1px solid var(--border);
+  margin-top: .5rem;
+}
+
+/* Buttons */
+.btn-generate {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s, transform .1s;
+  margin-top: 1rem;
+}
+.btn-generate:hover { background: var(--accent-hover); }
+.btn-generate:active { transform: scale(.98); }
+
+.btn-secondary {
+  width: 100%;
+  padding: 12px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+  margin-top: 8px;
+}
+.btn-secondary:hover { border-color: var(--text-light); }
+
+/* Fetch status */
+.fetch-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 8px;
+}
+.fetch-status.success { background: rgba(74,222,128,.1); color: #16a34a; }
+.fetch-status.loading { background: rgba(212,113,78,.1); color: var(--accent); }
+.fetch-status.error { background: rgba(239,68,68,.1); color: var(--red); }
+
+.spinner {
+  width: 14px; height: 14px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* === PREVIEW === */
+.preview {
+  background: #e8e0da;
+  overflow: hidden;
+  position: relative;
+}
+.preview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 5;
+}
+.preview-toolbar span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-mid);
+}
+.preview-toolbar .dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot-red { background: #ef4444; }
+.dot-yellow { background: #eab308; }
+.dot-green { background: #22c55e; }
+.preview-frame {
+  width: 100%;
+  height: calc(100vh - 48px);
+  border: none;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .preview { height: 60vh; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR FORM -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h1>TGRE Proposal Generator</h1>
+      <p>Fill in the details below, then hit Generate</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="owner">Owner & Property</button>
+      <button class="tab" data-tab="fees">Fees</button>
+      <button class="tab" data-tab="market">Market Data</button>
+    </div>
+
+    <!-- OWNER & PROPERTY TAB -->
+    <div class="tab-content active" id="tab-owner">
+      <div class="section-divider">Owner Details</div>
+
+      <div class="field">
+        <label>Owner Full Name</label>
+        <input type="text" id="owner_name" placeholder="e.g. John Smith" oninput="updateField('OWNER_NAME', this.value); updateField('OWNER_FIRST', this.value.split(' ')[0])">
+      </div>
+
+      <div class="section-divider">Property Details</div>
+
+      <div class="field">
+        <label>Property Address</label>
+        <input type="text" id="property_address" placeholder="e.g. 42 Oxford Street, Surry Hills NSW 2010" oninput="updateField('PROPERTY_ADDRESS', this.value)">
+      </div>
+
+      <div class="field">
+        <label>Suburb</label>
+        <input type="text" id="suburb" placeholder="e.g. Surry Hills" oninput="updateField('SUBURB', this.value)">
+      </div>
+
+      <div class="field">
+        <label>Property Type</label>
+        <select id="property_type" onchange="updatePropertyType(this.value)">
+          <option value="unit">Unit / Apartment</option>
+          <option value="house">House</option>
+          <option value="townhouse">Townhouse</option>
+          <option value="studio">Studio</option>
+        </select>
+      </div>
+
+      <div class="section-divider">3D Tour</div>
+      <div class="field">
+        <label>PropertyMe 3D Tour URL (optional)</label>
+        <input type="url" id="tour_url" placeholder="https://my.propertyme.com/public/viewer/..." oninput="updateTourUrl(this.value)">
+      </div>
+
+      <div class="section-divider">Suburb Description</div>
+      <div class="field">
+        <label>Brief suburb pitch (auto-filled with market data)</label>
+        <textarea id="suburb_desc" placeholder="A vibrant inner-city suburb with strong rental demand..." oninput="updateField('SUBURB_DESC', this.value)"></textarea>
+      </div>
+    </div>
+
+    <!-- FEES TAB -->
+    <div class="tab-content" id="tab-fees">
+      <div class="section-divider">Fee Schedule</div>
+
+      <div class="field range-field">
+        <div class="range-header">
+          <label>Management Fee</label>
+          <span class="range-val" id="mgmt_val">5.5%</span>
+        </div>
+        <input type="range" id="mgmt_fee" min="3" max="10" step="0.1" value="5.5" oninput="updateFee('mgmt')">
+      </div>
+
+      <div class="field range-field">
+        <div class="range-header">
+          <label>Letting Fee</label>
+          <span class="range-val" id="letting_val">1 week</span>
+        </div>
+        <input type="range" id="letting_fee" min="0.5" max="3" step="0.5" value="1" oninput="updateFee('letting')">
+      </div>
+
+      <div class="section-divider">Revenue Preview</div>
+      <div class="field">
+        <label>Weekly Rent (for calculations)</label>
+        <input type="number" id="weekly_rent" placeholder="e.g. 850" value="850" oninput="recalcRevenue()">
+      </div>
+
+      <div style="background:var(--bg);border-radius:var(--radius-sm);padding:1rem;margin-top:.5rem;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:13px;color:var(--text-mid);">Annual rent</span>
+          <span style="font-size:13px;font-weight:600;" id="annual_rent">$44,200</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:13px;color:var(--text-mid);">Management fee p/a</span>
+          <span style="font-size:13px;font-weight:600;" id="annual_mgmt">$2,431</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:13px;color:var(--text-mid);">Letting fee (one-off)</span>
+          <span style="font-size:13px;font-weight:600;" id="letting_amount">$850</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border);">
+          <span style="font-size:13px;font-weight:600;color:var(--accent);">Net annual income</span>
+          <span style="font-size:13px;font-weight:700;color:var(--accent);" id="net_income">$41,769</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARKET DATA TAB -->
+    <div class="tab-content" id="tab-market">
+      <div class="section-divider">Auto-Fetch Suburb Data</div>
+      <p style="font-size:13px;color:var(--text-mid);margin-bottom:12px;">Enter a suburb and postcode to auto-populate market statistics from public sources.</p>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Suburb</label>
+          <input type="text" id="market_suburb" placeholder="Redfern">
+        </div>
+        <div class="field">
+          <label>Postcode</label>
+          <input type="text" id="market_postcode" placeholder="2016" maxlength="4">
+        </div>
+      </div>
+
+      <button class="btn-generate" onclick="fetchSuburbData()" style="margin-top:0;">
+        <span id="fetch-btn-text">Fetch Market Data</span>
+      </button>
+      <div id="fetch-status"></div>
+
+      <div class="section-divider" style="margin-top:1.5rem;">Manual Override</div>
+      <p style="font-size:12px;color:var(--text-light);margin-bottom:12px;">Edit any field below to override auto-fetched values.</p>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Median Rent (Houses)</label>
+          <input type="text" id="median_rent_houses" placeholder="$950" oninput="updateField('MEDIAN_RENT_HOUSES', this.value)">
+        </div>
+        <div class="field">
+          <label>Median Rent (Units)</label>
+          <input type="text" id="median_rent_units" placeholder="$850" oninput="updateField('MEDIAN_RENT_UNITS', this.value)">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Median House Price</label>
+          <input type="text" id="median_house_price" placeholder="$2,190,000" oninput="updateField('MEDIAN_HOUSE_PRICE', this.value)">
+        </div>
+        <div class="field">
+          <label>Median Unit Price</label>
+          <input type="text" id="median_unit_price" placeholder="$1,175,000" oninput="updateField('MEDIAN_UNIT_PRICE', this.value)">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Median Property Price (hero card)</label>
+        <input type="text" id="median_price" placeholder="$2,190,000" oninput="updateField('MEDIAN_PRICE', this.value)">
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Capital Growth</label>
+          <input type="text" id="capital_growth" placeholder="+13.77%" oninput="updateField('CAPITAL_GROWTH', this.value)">
+        </div>
+        <div class="field">
+          <label>Vacancy Rate</label>
+          <input type="text" id="vacancy_rate" placeholder="1.93%" oninput="updateField('VACANCY_RATE', this.value)">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Yield Houses</label>
+          <input type="text" id="yield_houses" placeholder="2.62%" oninput="updateField('YIELD_HOUSES', this.value)">
+        </div>
+        <div class="field">
+          <label>Yield Units</label>
+          <input type="text" id="yield_units" placeholder="4.12%" oninput="updateField('YIELD_UNITS', this.value)">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Days on Market (Houses)</label>
+          <input type="text" id="dom_houses" placeholder="28" oninput="updateField('DOM_HOUSES', this.value)">
+        </div>
+        <div class="field">
+          <label>Days on Market (Units)</label>
+          <input type="text" id="dom_units" placeholder="33" oninput="updateField('DOM_UNITS', this.value)">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Houses Sold (12mo)</label>
+          <input type="text" id="sold_houses" placeholder="88" oninput="updateField('SOLD_HOUSES', this.value)">
+        </div>
+        <div class="field">
+          <label>Units Sold (12mo)</label>
+          <input type="text" id="sold_units" placeholder="169" oninput="updateField('SOLD_UNITS', this.value)">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Population</label>
+          <input type="text" id="population" placeholder="13,072" oninput="updateField('POPULATION', this.value)">
+        </div>
+        <div class="field">
+          <label>LGA</label>
+          <input type="text" id="lga" placeholder="City of Sydney" oninput="updateField('LGA', this.value)">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Auction Clearance Rate</label>
+          <input type="text" id="clearance_rate" placeholder="91.66%" oninput="updateField('CLEARANCE_RATE', this.value)">
+        </div>
+        <div class="field">
+          <label>Predominant Age Group</label>
+          <input type="text" id="predominant_age" placeholder="30–39 yrs" oninput="updateField('PREDOMINANT_AGE', this.value)">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Owner Occupied Rate</label>
+          <input type="text" id="owner_occ_rate" placeholder="35.10%" oninput="updateField('OWNER_OCC_RATE', this.value)">
+        </div>
+        <div class="field">
+          <label>Median Income (weekly)</label>
+          <input type="text" id="median_income" placeholder="$2,101" oninput="updateField('MEDIAN_INCOME', this.value)">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Income Growth (5yr)</label>
+        <input type="text" id="income_growth" placeholder="+17.31%" oninput="updateField('INCOME_GROWTH', this.value)">
+      </div>
+    </div>
+
+    <!-- GENERATE BUTTON (always visible) -->
+    <div style="padding:1rem 1.5rem 1.5rem;border-top:1px solid var(--border);background:var(--white);position:sticky;bottom:0;">
+      <button class="btn-generate" onclick="generateProposal()">Generate Proposal</button>
+      <button class="btn-secondary" onclick="downloadProposal()">Download HTML</button>
+    </div>
+  </div>
+
+  <!-- PREVIEW PANEL -->
+  <div class="preview">
+    <div class="preview-toolbar">
+      <div class="dot dot-red"></div>
+      <div class="dot dot-yellow"></div>
+      <div class="dot dot-green"></div>
+      <span style="margin-left:8px;">Live Preview</span>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-light);" id="preview-status">Ready</span>
+    </div>
+    <iframe id="preview-frame" class="preview-frame" src="proposal-template-v3.html"></iframe>
+  </div>
+</div>
+
+<script>
+// === STATE ===
+const state = {};
+let templateHTML = '';
+
+// Load template
+fetch('proposal-template-v3.html')
+  .then(r => r.text())
+  .then(html => {
+    templateHTML = html;
+    // Set default date
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
+    state['DATE_LONG'] = dateStr;
+    state['DATA_DATE'] = now.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' });
+    refreshPreview();
+  });
+
+// === TABS ===
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// === FIELD UPDATES ===
+function updateField(key, value) {
+  state[key] = value;
+  refreshPreview();
+}
+
+function updateFee(type) {
+  if (type === 'mgmt') {
+    const val = document.getElementById('mgmt_fee').value;
+    document.getElementById('mgmt_val').textContent = val + '%';
+    state['MGMT_FEE'] = val + '%';
+  } else {
+    const val = document.getElementById('letting_fee').value;
+    const label = val == 1 ? '1 week' : val + ' weeks';
+    document.getElementById('letting_val').textContent = label;
+    state['LETTING_FEE'] = label;
+  }
+  recalcRevenue();
+  refreshPreview();
+}
+
+function recalcRevenue() {
+  const rent = parseFloat(document.getElementById('weekly_rent').value) || 0;
+  const mgmt = parseFloat(document.getElementById('mgmt_fee').value) || 5.5;
+  const letting = parseFloat(document.getElementById('letting_fee').value) || 1;
+
+  const annual = rent * 52;
+  const mgmtAnnual = annual * (mgmt / 100);
+  const lettingAmount = rent * letting;
+  const net = annual - mgmtAnnual;
+
+  document.getElementById('annual_rent').textContent = '$' + annual.toLocaleString();
+  document.getElementById('annual_mgmt').textContent = '$' + mgmtAnnual.toLocaleString(undefined, {maximumFractionDigits: 0});
+  document.getElementById('letting_amount').textContent = '$' + lettingAmount.toLocaleString();
+  document.getElementById('net_income').textContent = '$' + net.toLocaleString(undefined, {maximumFractionDigits: 0});
+}
+
+function updateTourUrl(url) {
+  state['TOUR_URL'] = url;
+  refreshPreview();
+}
+
+function updatePropertyType(type) {
+  state['PROPERTY_TYPE'] = type;
+}
+
+// === REFRESH PREVIEW ===
+let refreshTimeout;
+function refreshPreview() {
+  clearTimeout(refreshTimeout);
+  refreshTimeout = setTimeout(() => {
+    if (!templateHTML) return;
+
+    let html = templateHTML;
+
+    // Replace all placeholders
+    for (const [key, value] of Object.entries(state)) {
+      const regex = new RegExp('\\{\\{' + key + '\\}\\}', 'g');
+      html = html.replace(regex, value || '');
+    }
+
+    // Handle gauge numeric values
+    const yieldH = parseFloat(state['YIELD_HOUSES']) || 0;
+    const yieldU = parseFloat(state['YIELD_UNITS']) || 0;
+    const vacancy = parseFloat(state['VACANCY_RATE']) || 0;
+    const clearance = parseFloat(state['CLEARANCE_RATE']) || 0;
+
+    html = html.replace(/\{\{YIELD_HOUSES_NUM\}\}/g, yieldH);
+    html = html.replace(/\{\{YIELD_UNITS_NUM\}\}/g, yieldU);
+    html = html.replace(/\{\{VACANCY_NUM\}\}/g, vacancy);
+    html = html.replace(/\{\{CLEARANCE_NUM\}\}/g, clearance);
+
+    // Replace tour URL if provided
+    if (state['TOUR_URL']) {
+      html = html.replace(
+        /src="https:\/\/my\.propertyme\.com\/public\/viewer\/[^"]*"/,
+        'src="' + state['TOUR_URL'] + '"'
+      );
+    }
+
+    // Write to iframe
+    const frame = document.getElementById('preview-frame');
+    frame.srcdoc = html;
+    document.getElementById('preview-status').textContent = 'Updated ' + new Date().toLocaleTimeString();
+  }, 300);
+}
+
+// === FETCH MARKET DATA ===
+async function fetchSuburbData() {
+  const suburb = document.getElementById('market_suburb').value.trim();
+  const postcode = document.getElementById('market_postcode').value.trim();
+
+  if (!suburb || !postcode) {
+    showFetchStatus('Enter suburb and postcode', 'error');
+    return;
+  }
+
+  showFetchStatus('Fetching data...', 'loading');
+  document.getElementById('fetch-btn-text').textContent = 'Fetching...';
+
+  // In production this would hit an API. For now, show instructions.
+  setTimeout(() => {
+    showFetchStatus('Use Claude to fetch: "Get suburb data for ' + suburb + ' ' + postcode + '"', 'success');
+    document.getElementById('fetch-btn-text').textContent = 'Fetch Market Data';
+
+    // Also set suburb field on owner tab
+    document.getElementById('suburb').value = suburb;
+    state['SUBURB'] = suburb;
+    refreshPreview();
+  }, 1500);
+}
+
+function showFetchStatus(msg, type) {
+  const el = document.getElementById('fetch-status');
+  el.innerHTML = '<div class="fetch-status ' + type + '">' +
+    (type === 'loading' ? '<div class="spinner"></div>' : '') +
+    msg + '</div>';
+}
+
+// === GENERATE / DOWNLOAD ===
+function generateProposal() {
+  // Ensure all remaining placeholders are cleaned
+  refreshPreview();
+
+  const frame = document.getElementById('preview-frame');
+  frame.contentWindow.scrollTo({ top: 0, behavior: 'smooth' });
+
+  document.getElementById('preview-status').textContent = 'Proposal generated ✓';
+  document.getElementById('preview-status').style.color = '#16a34a';
+}
+
+function downloadProposal() {
+  if (!templateHTML) return;
+
+  let html = templateHTML;
+  for (const [key, value] of Object.entries(state)) {
+    const regex = new RegExp('\\{\\{' + key + '\\}\\}', 'g');
+    html = html.replace(regex, value || '');
+  }
+
+  // Clean remaining placeholders
+  html = html.replace(/\{\{[A-Z_]+\}\}/g, '');
+
+  const ownerName = state['OWNER_NAME'] || 'Proposal';
+  const suburb = state['SUBURB'] || '';
+  const filename = 'TGRE-Proposal-' + ownerName.replace(/\s+/g, '-') + (suburb ? '-' + suburb : '') + '.html';
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  document.getElementById('preview-status').textContent = 'Downloaded: ' + filename;
+}
+
+// === INIT ===
+recalcRevenue();
+updateFee('mgmt');
+updateFee('letting');
+</script>
+
+</body>
+</html>
